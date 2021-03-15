@@ -35,7 +35,10 @@
 // }
 
 // Colors
-Start = fill
+// start = action (separator action)*
+start = args:(action separator*)+ extraCharacters { return args.map((v) => v[0]) }
+  /  action
+action = fill
 fill = color:color { return createFill({color}) }
   / 'f' _ operator:plusOrMinus? _ color:color { return createFill({color, operator}) }
 
@@ -61,12 +64,14 @@ number = $([0-9]+ ('.' [0-9]+)?)
 plusOrMinus = '+' / '-'
 
 // Misc
-separator = _'/'_
+separator = _ '/' _ { return null }
 combinedAction = [lrtbwhaxy]*
 operator = [\/+\-*%#=]
 integer = digits:[0-9]+ { return digits.join('') }
 digit = [0-9]
 
+extraCharacters
+  = .* { return true }
 // optional whitespace
 _  = [ \t\r\n]*
 // mandatory whitespace

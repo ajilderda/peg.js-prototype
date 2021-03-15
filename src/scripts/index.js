@@ -8,7 +8,7 @@ input.addEventListener('input', (e) => {
   const { type, message, payload } = parseValue(e.target.value);
   if (type === 'result') {
     output.classList.remove('error');
-    output.innerText = JSON.stringify(JSON.parse(message), null, '\t');
+    output.innerText = JSON.stringify(message, null, ' ');
   } else {
     output.classList.add('error');
     output.innerText = JSON.stringify(message);
@@ -22,7 +22,7 @@ function parseValue(input) {
     return {
       input,
       type: 'result',
-      message: JSON.stringify(result),
+      message: result,
     };
   } catch (err) {
     return {
@@ -33,7 +33,7 @@ function parseValue(input) {
     };
   }
 }
-input.value = 'f rgb(255,0,255)';
+input.value = '#ff0000 / rgb(255,0,255) / #ff0000';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 
@@ -52,7 +52,9 @@ extraOutput.innerHTML = tests
     return `
             <div class="${result.type}">
                 <strong>${result.input}</strong><br>
-                ${result.message}
+                <pre>
+                    ${JSON.stringify(result.message, null, ' ')}
+                </pre>
             </div>`;
   })
   .join('');
