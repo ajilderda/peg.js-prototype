@@ -18,7 +18,9 @@
       return value.includes('%') ? value * 255 : value;
     };
 
-    const toUnit = (value, type = null) => {
+    const toUnit = (value, type) => {
+      if (!type) return value;
+
       return {
         value, type
       }
@@ -49,6 +51,37 @@
       })
     }
 
+    // top / right / bottom / right operation, f.e. for defining corner radius
+    // values (2 4 2 2)
+    const toCornerRadius = (type, valueStr) => {
+      const values = valueStr.split(' ').filter(item => item !== '');
+      const [topRightRadius, bottomRightRadius, bottomLeftRadius, topLeftRadius] = values;
+
+      if (values.length === 1)
+        return { cornerRadius: values[0] }
+      else if (values.length === 2)
+        return {
+          topRightRadius,
+          bottomRightRadius,
+          bottomLeftRadius: values[0],
+          topLeftRadius: values[1],
+        }
+      else if (values.length === 3)
+        return {
+          topRightRadius,
+          bottomRightRadius,
+          bottomLeftRadius,
+          topLeftRadius: values[1],
+        }
+
+      return {
+        topRightRadius,
+        bottomRightRadius,
+        bottomLeftRadius,
+        topLeftRadius,
+      }
+    }
+
 }
 
 // input = command _ ? ',' command / command
@@ -67,18 +100,19 @@
 // Colors
 start = args:(action separator*)+ extraCharacters { return args.map((v) => v[0]) }
   /  action
-action = fill / xywh
+action = fill / xywh / cornerRadius
 fill = F _ operator:plusOrMinus? _ color:color { return createFill({color, operator}) }
   / F color:color { return createFill({color}) }
   / color:color { return createFill({color}) }
 xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, value, operator) }
   / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }
+cornerRadius = type:"cr" values:$(__ unit)+ { return toCornerRadius(type, values) }
 unit = number:number type:px { return toUnit(number, type) }
   / number:number { return toUnit(number) }
 pctUnit = number:number type:pct { return toUnit(number, type) }
 pxOrPctUnit = pctUnit / unit
 
-XYWH = [XxYyWwHh]+;
+XYWH = [xwyh]i+;
 F = [Ff];
 px = 'px'
 pct = '%'

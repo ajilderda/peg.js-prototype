@@ -2,42 +2,41 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Peg.js</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Peg.js</title>
 </head>
 
 <body>
-    <style>
-        html {
-            font-size: 16px;
-        }
+  <style>
+    html {
+      font-size: 16px;
+    }
 
-        #input {
-            padding: 4px;
-            font-size: 16px;
-        }
+    #input {
+      padding: 4px;
+      font-size: 16px;
+    }
 
-        pre {
-            white-space: pre;
-        }
+    pre {
+      white-space: pre;
+    }
 
-        #output,
-        #extraOutput>div {
-            margin-top: 12px;
-            padding: 8px;
-            font-family: monospace;
-            border-left: 4px solid lightgreen;
-        }
+    #output,
+    #extraOutput>div {
+      margin-top: 12px;
+      padding: 8px;
+      font-family: monospace;
+      border-left: 4px solid lightgreen;
+    }
 
-        #extraOutput.error,
-        #output.error {
-            border-left: 4px solid red;
-        }
-    </style>
-    <input type="text" id="input" />
-    <pre id="output"></pre>
-    <div id="extraOutput"></div>
+    .error {
+      border-left: 4px solid red !important;
+    }
+  </style>
+  <input type="text" id="input" />
+  <pre id="output"></pre>
+  <div id="extraOutput"></div>
 </body>
 
 </html>

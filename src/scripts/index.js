@@ -33,7 +33,7 @@ function parseValue(input) {
     };
   }
 }
-input.value = 'xwyh+20 / w20';
+input.value = 'cr 8 4 4 8';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 
