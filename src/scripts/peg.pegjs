@@ -10,15 +10,45 @@
     };
 
     function toRgb(value) {
-        console.log(value);
-        const color = tinycolor(value);
-        return color.toRgb();
+      const color = tinycolor(value);
+      return color.toRgb();
     }
 
     const rgbVal = (value) => {
-        console.log(value);
-         return value.includes('%') ? value * 255 : value;
+      return value.includes('%') ? value * 255 : value;
     };
+
+    const toUnit = (value, type = null) => {
+      return {
+        value, type
+      }
+    }
+
+    const toOperation = (xywhArr, {value}, operator, defaultOperator = '=') => {
+      return xywhArr.map(xywh => {
+        const type = ((input) => {
+          const xywh = input.toLowerCase();
+          switch (xywh) {
+            case 'x':
+              return 'MOVE_X'
+            case 'y':
+              return 'MOVE_Y'
+            case 'w':
+              return 'WIDTH'
+            case 'h':
+              return 'HEIGHT'
+          }
+        })(xywh);
+
+        return {
+          type,
+          operator,
+          value,
+          defaultOperator,
+        }
+      })
+    }
+
 }
 
 // input = command _ ? ',' command / command
@@ -35,12 +65,23 @@
 // }
 
 // Colors
-// start = action (separator action)*
 start = args:(action separator*)+ extraCharacters { return args.map((v) => v[0]) }
   /  action
-action = fill
-fill = color:color { return createFill({color}) }
-  / 'f' _ operator:plusOrMinus? _ color:color { return createFill({color, operator}) }
+action = fill / xywh
+fill = F _ operator:plusOrMinus? _ color:color { return createFill({color, operator}) }
+  / F color:color { return createFill({color}) }
+  / color:color { return createFill({color}) }
+xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, value, operator) }
+  / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }
+unit = number:number type:px { return toUnit(number, type) }
+  / number:number { return toUnit(number) }
+pctUnit = number:number type:pct { return toUnit(number, type) }
+pxOrPctUnit = pctUnit / unit
+
+XYWH = [XxYyWwHh]+;
+F = [Ff];
+px = 'px'
+pct = '%'
 
 color = colorRGB / colorHSL / colorHex
 colorHex = c:$('#' colorHex3 colorHex3?) {

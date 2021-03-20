@@ -33,11 +33,15 @@ function parseValue(input) {
     };
   }
 }
-input.value = '#ff0000 / rgb(255,0,255) / #ff0000';
+input.value = 'xwyh+20 / w20';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 
 const tests = [
+  'xwyh+20 / w20',
+  '12px',
+  '12%',
+  '#ff0000 / rgb(255,0,255) / #ff0000',
   '#f0f',
   '#ff0000',
   'hsl(300,0%,0%)',
