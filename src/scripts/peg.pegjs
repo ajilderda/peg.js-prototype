@@ -96,6 +96,17 @@
         visible
       }
     }
+
+    const toOpacity = (value, operator = null, defaultOperator = '=') => {
+      const numValue = parseFloat(value.replace('%', ''), 10);
+      const opacity = Number.isInteger(numValue) ? numValue / 100 : numValue;
+      return {
+        type: 'OPACITY',
+        opacity,
+        operator,
+        defaultOperator,
+      };
+    }
 }
 
 // input = command _ ? ',' command / command
@@ -122,6 +133,8 @@ xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, val
   / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }
 layerActions = 'l' _ mode:BLEND_MODE { return toBlendMode(mode) }
   / 'l' _ value:SHOW_HIDE { return toVisible(value) }
+  / [lo] _ value:numOrPercent { return toOpacity(value) }
+  / [lo] _ operator:operator _ value:numOrPercent { return toOpacity(value, operator) }
 cornerRadius = type:'cr' values:$(__ unit)+ { return toCornerRadius(type, values) }
 unit = number:number type:px { return toUnit(number, type) }
   / number:number { return toUnit(number) }
