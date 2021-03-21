@@ -168,6 +168,7 @@ fill = 'f'i _ operator:plusOrMinus? _ color:color { return toColor({type: 'FILL'
 stroke = 's'i __ matches:(elements:(
     strokeWeight:unit _ { return { key: 'strokeWeight', value: { strokeWeight } } }
     / color:color _ { return { key: 'color', value: { color: color } } }
+    / operator:operator _ { return { key: 'operator', value: { operator: operator } } }
     / strokeAlign:[ico] _ {
       const map = {i: 'INSIDE', c: 'CENTER', o: 'OUTSIDE'};
       return { key: 'align', value: { strokeAlign: map[strokeAlign] } }
@@ -175,8 +176,11 @@ stroke = 's'i __ matches:(elements:(
   )+
   &{ return disallowDuplicates(elements) } // validate input (keys are only permitted once)
   { return elements.map(el => el.value) }  // use the value (strip the key from the output)
-) { return matches.reduce((acc, match) => ({...acc, ...match}), {}) }
-
+) { return {
+  type: 'STROKE',
+  ...matches.reduce((acc, match) => ({...acc, ...match}), {})
+} }
+  / 's'i _ operator:'-' { return toStroke({type: 'STROKE', operator}) }
 
 xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, value, operator) }
   / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }

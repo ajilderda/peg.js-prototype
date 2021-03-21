@@ -33,7 +33,7 @@ function parseValue(input) {
     };
   }
 }
-input.value = 's i 1px #ff0';
+input.value = 's -';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 
