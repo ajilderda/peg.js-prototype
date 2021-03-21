@@ -126,43 +126,17 @@
     }
 }
 
-// input = command _ ? ',' command / command
-// command = groupAction / numericAction
-// // Actions
-// groupAction= 'bdc'/'bdw'/'bd'/'fs'/'cr'/'lh'/'tc'/'tc'/'tc'/'tc'/'c'/'f'/'o'/'n'/'v'
-// numericAction = _ combinedAction:combinedAction _ operator:operator* _ value:integer+ {
-// 	const defaultOperator = '+'
-// 	return {
-//     	combinedAction,
-//         operator: operator.length ? operator : defaultOperator,
-//         value: value.join('')
-//     }
-// }
-
-// Colors
 start = args:(action separator*)+ extraCharacters { return args.map((v) => v[0]) }
   /  action
+
+// ACTIONS
 action = fill / xywh / cornerRadius / layerActions / stroke
+
 fill = 'f'i _ operator:plusOrMinus? _ color:color { return toColor({type: 'FILL', color, operator}) }
   / 'f'i color:color { return toColor({type: 'FILL', color}) }
   // remove fill without specifying color, f.e. f -
   / 'f'i _ operator:'-' { return toColor({type: 'FILL', operator}) }
   / color:color { return toColor({type: 'FILL', color}) }
-
-// strokeWeight _ color _ strokeAlign
-// color _ strokeAlign
-// strokeAlign
-
-// color _ strokeAlign _ strokeWeight
-// color _ strokeWeight _ strokeAlign
-// strokeAlign _ strokeWeight
-
-
-// stroke = 's'i _ strokeWeight:unit? _ color:color? _ strokeAlign:[ico]? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
-//   / 's'i _ color:color? _ strokeWeight:unit? _ strokeAlign:[ico]? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
-//   / 's'i _ strokeAlign:[ico]? _ color:color? _ strokeWeight:unit? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
-//   / 's'i _ color:color? _ strokeWeight:unit? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
-//   / 's'i _ operator:'-' { return toStroke({type: 'STROKE', operator}) }
 
 // all fields optional where any order is allowed, but only once
 stroke = 's'i __ matches:(elements:(
@@ -184,11 +158,15 @@ stroke = 's'i __ matches:(elements:(
 
 xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, value, operator) }
   / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }
+
 layerActions = 'l' _ mode:BLEND_MODE { return toBlendMode(mode) }
   / 'l' _ value:SHOW_HIDE { return toVisible(value) }
   / [lo] _ value:numOrPercent { return toOpacity(value) }
   / [lo] _ operator:operator _ value:numOrPercent { return toOpacity(value, operator) }
+
 cornerRadius = type:'cr' values:$(__ unit)+ { return toCornerRadius(type, values) }
+
+// UNITS
 unit = number:number type:'px' { return number }
   / number:number
 pctUnit = number:number type:'%' { return toUnit(number, type) }
