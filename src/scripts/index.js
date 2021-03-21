@@ -33,11 +33,14 @@ function parseValue(input) {
     };
   }
 }
-input.value = 'cr 8 4 4 8';
+input.value = 'l overlay';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 
 const tests = [
+  'l show / l hide',
+  'l overlay',
+  'cr 8 4 4 8',
   'xwyh+20 / w20',
   '12px',
   '12%',

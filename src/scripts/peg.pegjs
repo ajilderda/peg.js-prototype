@@ -82,6 +82,20 @@
       }
     }
 
+    const toBlendMode = mode => {
+      const blendMode = mode.toUpperCase();
+      return {
+        type: 'BLEND_MODE',
+        blendMode,
+      }
+    }
+
+    const toVisible = visible => {
+      return {
+        type: 'VISIBILITY',
+        visible
+      }
+    }
 }
 
 // input = command _ ? ',' command / command
@@ -100,18 +114,23 @@
 // Colors
 start = args:(action separator*)+ extraCharacters { return args.map((v) => v[0]) }
   /  action
-action = fill / xywh / cornerRadius
+action = fill / xywh / cornerRadius / layerActions
 fill = F _ operator:plusOrMinus? _ color:color { return createFill({color, operator}) }
   / F color:color { return createFill({color}) }
   / color:color { return createFill({color}) }
 xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, value, operator) }
   / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }
-cornerRadius = type:"cr" values:$(__ unit)+ { return toCornerRadius(type, values) }
+layerActions = 'l' _ mode:BLEND_MODE { return toBlendMode(mode) }
+  / 'l' _ value:SHOW_HIDE { return toVisible(value) }
+cornerRadius = type:'cr' values:$(__ unit)+ { return toCornerRadius(type, values) }
 unit = number:number type:px { return toUnit(number, type) }
   / number:number { return toUnit(number) }
 pctUnit = number:number type:pct { return toUnit(number, type) }
 pxOrPctUnit = pctUnit / unit
 
+SHOW_HIDE = 'show'i { return true }
+  / 'hide'i { return false }
+BLEND_MODE = 'color'i / 'color burn'i / 'color dodge'i / 'darken'i / 'difference'i / 'exclusion'i / 'hue'i / 'hard light'i / 'lighten'i / 'linear burn'i / 'linear dodge'i / 'luminosity'i / 'multiply'i / 'normal'i / 'overlay'i / 'saturation'i / 'screen'i / 'soft light'i
 XYWH = [xwyh]i+;
 F = [Ff];
 px = 'px'
