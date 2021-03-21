@@ -33,11 +33,20 @@ function parseValue(input) {
     };
   }
 }
-input.value = 'l 20%';
+input.value = 's i 1px #ff0';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 
 const tests = [
+  's i 1px #ff0',
+  's #ff0 i',
+  's 1',
+  's c 1px #ff0',
+  'f -',
+  'f #ff0000 / f - rgb(255,0,255)',
+  '#ff0000 / rgb(255,0,255) / #ff0000',
+  '#f0f',
+  '#ff0000',
   'l 20% / o 20%',
   'l 0.2 / o 0.2',
   'l 20 / o 20',
@@ -45,11 +54,6 @@ const tests = [
   'l overlay',
   'cr 8 4 4 8',
   'xwyh+20 / w20',
-  '12px',
-  '12%',
-  '#ff0000 / rgb(255,0,255) / #ff0000',
-  '#f0f',
-  '#ff0000',
   'hsl(300,0%,0%)',
   'hsla(100,10%,10%, 0.2)',
   'rgb(255,0,255)',

@@ -1,11 +1,12 @@
 {
     var tinycolor = require('tinycolor2');
     const isNotNullOrUndefined = (input) => input !== null && input !== undefined;
-    const createFill = ({color, operator}) => {
+    const toColor = ({type = 'FILL', color, operator, defaultOperator = '='}) => {
       return {
-        type: 'fill',
-        operator: operator === '-' ? 'remove' : 'add',
-        color
+        type,
+        operator,
+        defaultOperator,
+        color,
       }
     };
 
@@ -18,13 +19,7 @@
       return value.includes('%') ? value * 255 : value;
     };
 
-    const toUnit = (value, type) => {
-      if (!type) return value;
-
-      return {
-        value, type
-      }
-    }
+    const toUnit = (value, type) => ({ value, type });
 
     const toOperation = (xywhArr, {value}, operator, defaultOperator = '=') => {
       return xywhArr.map(xywh => {
@@ -45,8 +40,8 @@
         return {
           type,
           operator,
-          value,
           defaultOperator,
+          value,
         }
       })
     }
@@ -102,10 +97,32 @@
       const opacity = Number.isInteger(numValue) ? numValue / 100 : numValue;
       return {
         type: 'OPACITY',
-        opacity,
         operator,
         defaultOperator,
+        opacity,
       };
+    }
+
+    const toStroke = (obj) => {
+      return obj
+    }
+
+    // any order is allowed, but only once
+    // tweaked from https://gist.github.com/nedzadarek/b0bf9aaaefd084be4f411a6767eee7fa
+    // SO topic: https://stackoverflow.com/a/37137486
+    function disallowDuplicates(elements){
+    	if (elements < 1) return false;
+
+      // count the amount of items
+      const keyCount = elements.reduce((acc, el) => {
+        const { key } = el;
+        const count = acc[el.key] || 0;
+        return {...acc, [key]: count + 1}
+      }, {})
+      // check if any of the items are > 1. If so, return false
+      const isValid = !Object.values(keyCount).some(el => el > 1);
+
+      return isValid;
     }
 }
 
@@ -125,10 +142,42 @@
 // Colors
 start = args:(action separator*)+ extraCharacters { return args.map((v) => v[0]) }
   /  action
-action = fill / xywh / cornerRadius / layerActions
-fill = F _ operator:plusOrMinus? _ color:color { return createFill({color, operator}) }
-  / F color:color { return createFill({color}) }
-  / color:color { return createFill({color}) }
+action = fill / xywh / cornerRadius / layerActions / stroke
+fill = 'f'i _ operator:plusOrMinus? _ color:color { return toColor({type: 'FILL', color, operator}) }
+  / 'f'i color:color { return toColor({type: 'FILL', color}) }
+  // remove fill without specifying color, f.e. f -
+  / 'f'i _ operator:'-' { return toColor({type: 'FILL', operator}) }
+  / color:color { return toColor({type: 'FILL', color}) }
+
+// strokeWeight _ color _ strokeAlign
+// color _ strokeAlign
+// strokeAlign
+
+// color _ strokeAlign _ strokeWeight
+// color _ strokeWeight _ strokeAlign
+// strokeAlign _ strokeWeight
+
+
+// stroke = 's'i _ strokeWeight:unit? _ color:color? _ strokeAlign:[ico]? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
+//   / 's'i _ color:color? _ strokeWeight:unit? _ strokeAlign:[ico]? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
+//   / 's'i _ strokeAlign:[ico]? _ color:color? _ strokeWeight:unit? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
+//   / 's'i _ color:color? _ strokeWeight:unit? { return toStroke({type: 'STROKE', color, strokeWeight, strokeAlign }) }
+//   / 's'i _ operator:'-' { return toStroke({type: 'STROKE', operator}) }
+
+// all fields optional where any order is allowed, but only once
+stroke = 's'i __ matches:(elements:(
+    strokeWeight:unit _ { return { key: 'strokeWeight', value: { strokeWeight } } }
+    / color:color _ { return { key: 'color', value: { color: color } } }
+    / strokeAlign:[ico] _ {
+      const map = {i: 'INSIDE', c: 'CENTER', o: 'OUTSIDE'};
+      return { key: 'align', value: { strokeAlign: map[strokeAlign] } }
+    }
+  )+
+  &{ return disallowDuplicates(elements) } // validate input (keys are only permitted once)
+  { return elements.map(el => el.value) }  // use the value (strip the key from the output)
+) { return matches.reduce((acc, match) => ({...acc, ...match}), {}) }
+
+
 xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, value, operator) }
   / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }
 layerActions = 'l' _ mode:BLEND_MODE { return toBlendMode(mode) }
@@ -136,23 +185,18 @@ layerActions = 'l' _ mode:BLEND_MODE { return toBlendMode(mode) }
   / [lo] _ value:numOrPercent { return toOpacity(value) }
   / [lo] _ operator:operator _ value:numOrPercent { return toOpacity(value, operator) }
 cornerRadius = type:'cr' values:$(__ unit)+ { return toCornerRadius(type, values) }
-unit = number:number type:px { return toUnit(number, type) }
-  / number:number { return toUnit(number) }
-pctUnit = number:number type:pct { return toUnit(number, type) }
+unit = number:number type:'px' { return number }
+  / number:number
+pctUnit = number:number type:'%' { return toUnit(number, type) }
 pxOrPctUnit = pctUnit / unit
 
 SHOW_HIDE = 'show'i { return true }
   / 'hide'i { return false }
 BLEND_MODE = 'color'i / 'color burn'i / 'color dodge'i / 'darken'i / 'difference'i / 'exclusion'i / 'hue'i / 'hard light'i / 'lighten'i / 'linear burn'i / 'linear dodge'i / 'luminosity'i / 'multiply'i / 'normal'i / 'overlay'i / 'saturation'i / 'screen'i / 'soft light'i
 XYWH = [xwyh]i+;
-F = [Ff];
-px = 'px'
-pct = '%'
 
 color = colorRGB / colorHSL / colorHex
-colorHex = c:$('#' colorHex3 colorHex3?) {
-    return toRgb(c);
-}
+colorHex = c:$('#' colorHex3 colorHex3?) { return toRgb(c); }
 colorHex3 = hexChar hexChar hexChar
 colorRGB = ('rgba' / 'rgb') '(' _ r:numOrPercent ',' _ g:numOrPercent ',' _ b:numOrPercent ','? _ a:number? _ ')' {
     const alpha = isNotNullOrUndefined(a) ? a : 1;
