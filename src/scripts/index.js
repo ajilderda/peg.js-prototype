@@ -33,7 +33,7 @@ function parseValue(input) {
     };
   }
 }
-input.value = 's -';
+input.value = 'l darken show 1';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 

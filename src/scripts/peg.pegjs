@@ -94,17 +94,12 @@
 
     const toOpacity = (value, operator = null, defaultOperator = '=') => {
       const numValue = parseFloat(value.replace('%', ''), 10);
-      const opacity = Number.isInteger(numValue) ? numValue / 100 : numValue;
+      const opacity = Number.isInteger(numValue) && value !== '1' ? numValue / 100 : numValue;
       return {
-        type: 'OPACITY',
         operator,
         defaultOperator,
         opacity,
       };
-    }
-
-    const toStroke = (obj) => {
-      return obj
     }
 
     // any order is allowed, but only once
@@ -154,15 +149,27 @@ stroke = 's'i __ matches:(elements:(
   type: 'STROKE',
   ...matches.reduce((acc, match) => ({...acc, ...match}), {})
 } }
-  / 's'i _ operator:'-' { return toStroke({type: 'STROKE', operator}) }
+  / 's'i _ operator:'-' { return {type: 'STROKE', operator} }
 
 xywh = xywh:XYWH _ operator:operator _ value:unit { return toOperation(xywh, value, operator) }
   / xywh:XYWH _ value:unit  { return toOperation(xywh, value, null, '=') }
 
-layerActions = 'l' _ mode:BLEND_MODE { return toBlendMode(mode) }
-  / 'l' _ value:SHOW_HIDE { return toVisible(value) }
-  / [lo] _ value:numOrPercent { return toOpacity(value) }
-  / [lo] _ operator:operator _ value:numOrPercent { return toOpacity(value, operator) }
+// layerActions = 'l' _ mode:BLEND_MODE { return toBlendMode(mode) }
+//   / 'l' _ value:('show'i { return true } / 'hide'i { return false }) { return toVisible(value) }
+//   / [lo] _ value:numOrPercent { return toOpacity(value) }
+//   / [lo] _ operator:operator _ value:numOrPercent { return toOpacity(value, operator) }
+
+layerActions = 'l'i __ matches:(elements:(
+    value:BLEND_MODE _ { return { key: 'blendMode', value: { blendMode: value} } }
+    / value:('show'i { return true } / 'hide'i { return false }) _ { return { key: 'visibility', value: { visibility: value } } }
+    / value:numOrPercent { return { key: 'opacity', value: {opacity: toOpacity(value)}} }
+  )+
+  &{ return disallowDuplicates(elements) } // validate input (keys are only permitted once)
+  { return elements.map(el => el.value) }  // use the value (strip the key from the output)
+) { return {
+  type: 'LAYER',
+  ...matches.reduce((acc, match) => ({...acc, ...match}), {})
+} }
 
 cornerRadius = type:'cr' values:$(__ unit)+ { return toCornerRadius(type, values) }
 
@@ -172,8 +179,6 @@ unit = number:number type:'px' { return number }
 pctUnit = number:number type:'%' { return toUnit(number, type) }
 pxOrPctUnit = pctUnit / unit
 
-SHOW_HIDE = 'show'i { return true }
-  / 'hide'i { return false }
 BLEND_MODE = 'color'i / 'color burn'i / 'color dodge'i / 'darken'i / 'difference'i / 'exclusion'i / 'hue'i / 'hard light'i / 'lighten'i / 'linear burn'i / 'linear dodge'i / 'luminosity'i / 'multiply'i / 'normal'i / 'overlay'i / 'saturation'i / 'screen'i / 'soft light'i
 XYWH = [xwyh]i+;
 
