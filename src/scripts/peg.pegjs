@@ -121,8 +121,41 @@
     }
 }
 
-start = args:(action separator*)+ extraCharacters { return args.map((v) => v[0]) }
-  /  action
+start = result:splitActions {
+  if (!Array.isArray(result)) return [result]
+  return result;
+}
+// Split actions
+splitActions = _ first:(actionsWithExtraChars Separator) _ second:splitActions {
+  if (second.length) return [...first, ...second]
+  else return [...first, second];
+}
+/ actionsWithExtraChars
+/ first:(ALL Separator) second:splitActions {
+  if (second.length) return [...first, ...second]
+  else return [...first, second];
+}
+/ Separator ALL Separator
+/ ALL Separator
+/ ALL
+// match all characters except the separator (,)
+ALL = chars:[^,]* { return {extra: chars.join('') }}
+
+actionsWithExtraChars = (actions:action extraChars:ALL {
+  if (Array.isArray(actions)) return { actions, extraChars };
+  return {...actions, ...extraChars}
+})
+Separator
+  = "," {
+    return {
+      type: 'separator',
+      text: ','
+    }
+  }
+
+Character
+  = .
+
 
 // ACTIONS
 action = fill / xywh / cornerRadius / layerActions / stroke
@@ -174,7 +207,7 @@ layerActions = 'l'i __ matches:(elements:(
 cornerRadius = type:'cr' values:$(__ unit)+ { return toCornerRadius(type, values) }
 
 // UNITS
-unit = number:number type:'px' { return number }
+unit = $(number:number type:'px')
   / number:number
 pctUnit = number:number type:'%' { return toUnit(number, type) }
 pxOrPctUnit = pctUnit / unit
@@ -202,14 +235,14 @@ number = $([0-9]+ ('.' [0-9]+)?)
 plusOrMinus = '+' / '-'
 
 // Misc
-separator = _ '/' _ { return null }
+separator = _ '/' _ { return { type: 'separator' } }
 combinedAction = [lrtbwhaxy]*
-operator = [\/+\-*%#=]
+operator = [\/+\-*%=]
 integer = digits:[0-9]+ { return digits.join('') }
 digit = [0-9]
 
-extraCharacters
-  = .* { return true }
+extraChars
+  = chars:.* { return chars.join('')}
 // optional whitespace
 _  = [ \t\r\n]*
 // mandatory whitespace

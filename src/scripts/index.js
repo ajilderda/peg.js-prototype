@@ -5,10 +5,11 @@ const output = document.getElementById('output');
 const extraOutput = document.getElementById('extraOutput');
 
 input.addEventListener('input', (e) => {
+  window.localStorage.setItem('pegjs', e.target.value);
   const { type, message, payload } = parseValue(e.target.value);
   if (type === 'result') {
     output.classList.remove('error');
-    output.innerText = JSON.stringify(message, null, ' ');
+    output.innerText = JSON.stringify(message, null, '\t');
   } else {
     output.classList.add('error');
     output.innerText = JSON.stringify(message);
@@ -33,7 +34,9 @@ function parseValue(input) {
     };
   }
 }
-input.value = 'l darken show 1';
+input.value = window.localStorage.getItem('pegjs');
+// input.value = 'l darken show 1 dd / l show REMOVE';
+// input.value = 'l darken show 1 dd';
 // input.value = "#ff0";
 input.dispatchEvent(new Event('input'));
 
