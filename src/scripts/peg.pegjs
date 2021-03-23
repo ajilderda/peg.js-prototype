@@ -1,6 +1,13 @@
 {
     var tinycolor = require('tinycolor2');
     const isNotNullOrUndefined = (input) => input !== null && input !== undefined;
+
+    // covenience method so that we can easily toggle location output while debugging
+    const getLocation = (location) => {
+      // return {}
+      return { location }
+    }
+
     const toColor = ({type = 'FILL', color, operator, defaultOperator = '='}) => {
       return {
         type,
@@ -126,30 +133,32 @@ start = result:splitActions {
   return result;
 }
 // Split actions
-splitActions = _ first:(actionsWithExtraChars Separator) _ second:splitActions {
-  if (second.length) return [...first, ...second]
-  else return [...first, second];
+splitActions = _ first:(actionsWithExtraChars Separator) _ rest:splitActions {
+  const [action, separator] = first;
+  if (rest.length) return [action, separator, ...rest]
+  else return [action, separator, rest];
 }
 / actionsWithExtraChars
 / first:(ALL Separator) second:splitActions {
-  if (second.length) return [...first, ...second]
+  if (second.length) return [...first, ...second];
   else return [...first, second];
 }
 / Separator ALL Separator
 / ALL Separator
 / ALL
 // match all characters except the separator (,)
-ALL = chars:[^,]* { return {extra: chars.join('') }}
+ALL = chars:[^,]* { return { extra: chars.join('') } }
 
 actionsWithExtraChars = (actions:action extraChars:ALL {
-  if (Array.isArray(actions)) return { actions, extraChars };
-  return {...actions, ...extraChars}
+  if (Array.isArray(actions)) return { actions, extraChars, location: location() };
+  return {...actions, ...extraChars, location: location()}
 })
 Separator
   = "," {
     return {
       type: 'separator',
-      text: ','
+      text: ',',
+      ...getLocation(location())
     }
   }
 
@@ -235,7 +244,6 @@ number = $([0-9]+ ('.' [0-9]+)?)
 plusOrMinus = '+' / '-'
 
 // Misc
-separator = _ '/' _ { return { type: 'separator' } }
 combinedAction = [lrtbwhaxy]*
 operator = [\/+\-*%=]
 integer = digits:[0-9]+ { return digits.join('') }
